@@ -18,6 +18,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "example": "tsc && node examples/bar-chart.js",
     "examples": "tsc && for f in examples/*.ts; do echo \"\\n=== $f ===\"; npx tsx \"$f\"; done"
   },
@@ -41,7 +43,8 @@
   "author": "Dan Allison",
   "license": "MIT",
   "devDependencies": {
+    "tsx": "^4.7.0",
     "typescript": "^5.3.0",
-    "tsx": "^4.7.0"
+    "vitest": "^3.2.4"
   }
 }
