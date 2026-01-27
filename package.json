@@ -1,0 +1,39 @@
+{
+  "name": "motif",
+  "version": "0.1.0",
+  "description": "A tiny library for creating data-driven SVGs with a declarative API",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "example": "tsc && node examples/bar-chart.js",
+    "examples": "tsc && for f in examples/*.ts; do echo \"\\n=== $f ===\"; npx tsx \"$f\"; done"
+  },
+  "keywords": [
+    "svg",
+    "declarative",
+    "data-driven",
+    "visualization",
+    "charts",
+    "graphics",
+    "typescript"
+  ],
+  "author": "Dan Allison",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "tsx": "^4.7.0"
+  }
+}

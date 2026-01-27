@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>motif Playground</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+
+    .example {
+      background: #16213e;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .example-header {
+      background: #0f3460;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .example-header h2 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #fff;
+    }
+
+    .example-header button {
+      background: #4ecdc4;
+      color: #1a1a2e;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .example-header button:hover {
+      background: #45b7aa;
+    }
+
+    .example-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 400px;
+    }
+
+    @media (max-width: 900px) {
+      .example-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-panel {
+      border-right: 1px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-panel textarea {
+      flex: 1;
+      background: #0d1117;
+      color: #c9d1d9;
+      border: none;
+      padding: 15px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+
+    .preview-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #1a1a2e;
+      min-height: 400px;
+      overflow: auto;
+    }
+
+    .preview-panel svg {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .error {
+      color: #ff6b6b;
+      padding: 20px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .playground-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .playground-section h2 {
+      margin: 0 0 10px 0;
+      color: #fff;
+    }
+
+    .playground-section p {
+      margin: 0;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .api-docs {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px 30px;
+      margin-bottom: 30px;
+    }
+
+    .api-docs h2 {
+      color: #fff;
+      margin-top: 0;
+    }
+
+    .api-docs code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #4ecdc4;
+    }
+
+    .api-docs pre {
+      background: #0d1117;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      color: #c9d1d9;
+    }
+
+    .api-docs ul {
+      padding-left: 20px;
+    }
+
+    .api-docs li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>motif</h1>
+  <p class="subtitle">A tiny library for creating data-driven SVGs</p>
+
+  <div class="api-docs">
+    <h2>Quick Reference</h2>
+    <p><strong>svg()</strong> - Low-level declarative SVG builder</p>
+    <ul>
+      <li><code>$each: array</code> - Iterate over data, creating element for each item</li>
+      <li><code>$if: condition</code> - Conditionally render element</li>
+      <li><code>$text: content</code> - Set text content</li>
+      <li><code>$raw: string</code> - Inject raw SVG string (for composition)</li>
+      <li><code>({ d, i, data, parent }) =&gt; value</code> - Dynamic values via functions</li>
+    </ul>
+    <p><strong>plot()</strong> - High-level charting with auto-scaling</p>
+    <ul>
+      <li><code>data</code> - Array of data points</li>
+      <li><code>x: d =&gt; value</code> - X accessor function</li>
+      <li><code>y: d =&gt; value</code> - Y accessor function</li>
+      <li><code>type</code> - 'scatter' | 'line' | 'bar' | 'area'</li>
+      <li><code>color</code> - Static color or <code>(d, i) =&gt; color</code></li>
+      <li><code>xAxis / yAxis</code> - <code>{ label, ticks, grid, format }</code></li>
+    </ul>
+  </div>
+
+  <div class="playground-section">
+    <h2>Live Playground</h2>
+    <p>Edit any code below and click "Run" (or press Ctrl+Enter) to see changes instantly</p>
+  </div>
+
+  <div id="examples"></div>
+
+  <script>
+    // ============================================
+    // declarative-svg library (embedded)
+    // ============================================
+    const SVG_ELEMENTS = new Set([
+      'svg', 'g', 'defs', 'symbol', 'use', 'title', 'desc',
+      'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path',
+      'text', 'tspan', 'textPath',
+      'image', 'foreignObject',
+      'linearGradient', 'radialGradient', 'stop', 'pattern',
+      'clipPath', 'mask', 'filter',
+      'feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite',
+      'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap',
+      'feDropShadow', 'feFlood', 'feGaussianBlur', 'feImage', 'feMerge',
+      'feMergeNode', 'feMorphology', 'feOffset', 'feSpecularLighting',
+      'feTile', 'feTurbulence', 'marker', 'animate', 'animateMotion',
+      'animateTransform', 'set', 'a',
+    ]);
+
+    const SPECIAL_KEYS = new Set(['$each', '$if', '$text', '$key', '$raw']);
+
+    function escapeAttr(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function escapeText(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function isElement(key) {
+      return SVG_ELEMENTS.has(key);
+    }
+
+    function isAttribute(key) {
+      return !isElement(key) && !SPECIAL_KEYS.has(key) && !key.startsWith('$');
+    }
+
+    function evaluate(value, ctx) {
+      return typeof value === 'function' ? value(ctx) : value;
+    }
+
+    function renderElement(tagName, definition, ctx, options) {
+      const { pretty, indent } = options;
+      const nl = pretty ? '\n' : '';
+      const pad = pretty ? '  '.repeat(indent) : '';
+
+      if (definition.$if !== undefined) {
+        const condition = evaluate(definition.$if, ctx);
+        if (!condition) return '';
+      }
+
+      const attributes = [];
+      const children = [];
+      let textContent = '';
+      let rawContent = '';
+
+      for (const [key, value] of Object.entries(definition)) {
+        if (SPECIAL_KEYS.has(key)) {
+          if (key === '$text') {
+            textContent = escapeText(evaluate(value, ctx));
+          } else if (key === '$raw') {
+            rawContent = evaluate(value, ctx) || '';
+          }
+          continue;
+        }
+
+        if (isElement(key)) {
+          children.push({ tagName: key, definition: value });
+        } else if (isAttribute(key)) {
+          const attrValue = evaluate(value, ctx);
+          if (attrValue !== null && attrValue !== undefined && attrValue !== false) {
+            attributes.push(`${key}="${escapeAttr(attrValue)}"`);
+          }
+        }
+      }
+
+      const attrStr = attributes.length > 0 ? ' ' + attributes.join(' ') : '';
+
+      let childrenStr = '';
+      for (const child of children) {
+        childrenStr += renderNode(child.tagName, child.definition, ctx, {
+          ...options,
+          indent: indent + 1,
+        });
+      }
+
+      if (tagName === 'text' && textContent) {
+        return `${pad}<${tagName}${attrStr}>${textContent}</${tagName}>${nl}`;
+      }
+
+      const hasContent = childrenStr || textContent || rawContent;
+      if (hasContent) {
+        const textPad = pretty ? '  '.repeat(indent + 1) : '';
+        const rawPad = pretty && rawContent ? textPad : '';
+        const rawNl = pretty && rawContent ? nl : '';
+        return `${pad}<${tagName}${attrStr}>${nl}${childrenStr}${textContent ? textPad + textContent + nl : ''}${rawContent ? rawPad + rawContent + rawNl : ''}${pad}</${tagName}>${nl}`;
+      } else {
+        return `${pad}<${tagName}${attrStr}/>${nl}`;
+      }
+    }
+
+    function renderNode(tagName, definition, ctx, options) {
+      if (Array.isArray(definition)) {
+        return definition.map(def => renderNode(tagName, def, ctx, options)).join('');
+      }
+
+      if (typeof definition !== 'object' || definition === null) {
+        const value = typeof definition === 'function' ? definition(ctx) : definition;
+        const pad = options.pretty ? '  '.repeat(options.indent) : '';
+        const nl = options.pretty ? '\n' : '';
+        return `${pad}<${tagName}>${escapeText(value)}</${tagName}>${nl}`;
+      }
+
+      if (definition.$each !== undefined) {
+        const dataSource = evaluate(definition.$each, ctx);
+        if (!Array.isArray(dataSource)) {
+          console.warn('$each must be an array, got:', dataSource);
+          return '';
+        }
+
+        const { $each, ...restDefinition } = definition;
+
+        return dataSource.map((item, index) => {
+          const iterCtx = {
+            ...ctx,
+            value: item,
+            index,
+            data: dataSource,
+            parent: ctx,
+            d: item,
+            i: index,
+          };
+          return renderElement(tagName, restDefinition, iterCtx, options);
+        }).join('');
+      }
+
+      return renderElement(tagName, definition, ctx, options);
+    }
+
+    function svg(definition, options = {}) {
+      const { pretty = false } = options;
+      const ctx = { d: null, value: null, i: 0, index: 0, data: [], parent: null };
+      const rootDef = { xmlns: 'http://www.w3.org/2000/svg', ...definition };
+      return renderElement('svg', rootDef, ctx, { pretty, indent: 0 }).trim();
+    }
+
+    // ============================================
+    // plot() - High-level charting with auto-scaling
+    // ============================================
+    function extent(values) {
+      let min = Infinity, max = -Infinity;
+      for (const v of values) { if (v < min) min = v; if (v > max) max = v; }
+      return [min, max];
+    }
+
+    function niceNumber(range, round) {
+      const exp = Math.floor(Math.log10(range));
+      const frac = range / Math.pow(10, exp);
+      let nice;
+      if (round) {
+        if (frac < 1.5) nice = 1;
+        else if (frac < 3) nice = 2;
+        else if (frac < 7) nice = 5;
+        else nice = 10;
+      } else {
+        if (frac <= 1) nice = 1;
+        else if (frac <= 2) nice = 2;
+        else if (frac <= 5) nice = 5;
+        else nice = 10;
+      }
+      return nice * Math.pow(10, exp);
+    }
+
+    function niceScale(min, max, maxTicks = 5) {
+      const range = niceNumber(max - min, false);
+      const step = niceNumber(range / (maxTicks - 1), true);
+      return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step, step };
+    }
+
+    function generateTicks(min, max, step) {
+      const ticks = [];
+      for (let v = min; v <= max + step * 0.5; v += step) ticks.push(Math.round(v * 1e10) / 1e10);
+      return ticks;
+    }
+
+    function createScale(domain, range) {
+      const [d0, d1] = domain, [r0, r1] = range;
+      const scale = (r1 - r0) / (d1 - d0 || 1);
+      return v => r0 + (v - d0) * scale;
+    }
+
+    function defaultFormat(v) {
+      if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+      if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+      return Number.isInteger(v) ? v.toString() : v.toFixed(1);
+    }
+
+    function plot(config, options = {}) {
+      const { width, height, data, x: xAcc, y: yAcc, type = 'scatter',
+        color = 'steelblue', radius = 4, margin: mCfg = {},
+        xAxis: xCfg = {}, yAxis: yCfg = {}, background, title } = config;
+
+      const margin = { top: title ? 40 : 20, right: 20,
+        bottom: xCfg !== false && xCfg.label ? 50 : 35,
+        left: yCfg !== false && yCfg.label ? 60 : 45, ...mCfg };
+
+      const pw = width - margin.left - margin.right;
+      const ph = height - margin.top - margin.bottom;
+
+      const xVals = data.map((d, i) => { const v = xAcc(d, i); return v instanceof Date ? v.getTime() : v; });
+      const yVals = data.map((d, i) => yAcc(d, i));
+
+      const [xMin, xMax] = extent(xVals);
+      const [yMin, yMax] = extent(yVals);
+      const yDomainMin = type === 'bar' ? Math.min(0, yMin) : yMin;
+
+      const xNice = niceScale(xMin, xMax, xCfg?.ticks ?? 5);
+      const yNice = niceScale(yDomainMin, yMax, yCfg?.ticks ?? 5);
+
+      const xScale = createScale([xNice.min, xNice.max], [0, pw]);
+      const yScale = createScale([yNice.min, yNice.max], [ph, 0]);
+
+      const xTicks = generateTicks(xNice.min, xNice.max, xNice.step);
+      const yTicks = generateTicks(yNice.min, yNice.max, yNice.step);
+
+      const xFmt = xCfg?.format ?? defaultFormat;
+      const yFmt = yCfg?.format ?? defaultFormat;
+
+      const getColor = typeof color === 'function' ? color : () => color;
+      const getRadius = typeof radius === 'function' ? radius : () => radius;
+
+      const els = {};
+      if (background) els.rect = { width, height, fill: background };
+      if (title) els.text = { x: width/2, y: 24, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 'bold', fill: '#333', $text: title };
+
+      const pg = { transform: `translate(${margin.left}, ${margin.top})` };
+
+      // Grid
+      const grids = [];
+      if (yCfg !== false && yCfg.grid !== false) {
+        grids.push({ line: { $each: yTicks, x1: 0, y1: ({d}) => yScale(d), x2: pw, y2: ({d}) => yScale(d), stroke: '#e0e0e0' }});
+      }
+      if (xCfg !== false && xCfg.grid) {
+        grids.push({ line: { $each: xTicks, x1: ({d}) => xScale(d), y1: 0, x2: ({d}) => xScale(d), y2: ph, stroke: '#e0e0e0' }});
+      }
+      if (grids.length) pg.g = grids;
+
+      // Data visualization
+      if (type === 'scatter') {
+        pg.circle = { $each: data, cx: ({i}) => xScale(xVals[i]), cy: ({i}) => yScale(yVals[i]), r: ({d,i}) => getRadius(d,i), fill: ({d,i}) => getColor(d,i) };
+      } else if (type === 'line' || type === 'area') {
+        const pts = data.map((d,i) => ({ x: xScale(xVals[i]), y: yScale(yVals[i]) }));
+        const linePath = pts.map((p,i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
+        if (type === 'area') {
+          const areaPath = linePath + ` L ${pts[pts.length-1].x} ${ph} L ${pts[0].x} ${ph} Z`;
+          pg.path = [{ d: areaPath, fill: typeof color === 'string' ? color : 'steelblue', opacity: 0.3 },
+                     { d: linePath, fill: 'none', stroke: typeof color === 'string' ? color : 'steelblue', 'stroke-width': 2 }];
+        } else {
+          pg.path = { d: linePath, fill: 'none', stroke: typeof color === 'string' ? color : 'steelblue', 'stroke-width': 2, 'stroke-linecap': 'round' };
+        }
+        pg.circle = { $each: data, cx: ({i}) => xScale(xVals[i]), cy: ({i}) => yScale(yVals[i]), r: 3, fill: typeof color === 'string' ? color : 'steelblue' };
+      } else if (type === 'bar') {
+        const bw = Math.max(1, (pw / data.length) * 0.8);
+        pg.rect = { $each: data, x: ({i}) => xScale(xVals[i]) - bw/2, y: ({i}) => Math.min(yScale(yVals[i]), yScale(0)),
+          width: bw, height: ({i}) => Math.abs(yScale(yVals[i]) - yScale(0)), fill: ({d,i}) => getColor(d,i), rx: 2 };
+      }
+
+      // Axes
+      if (!pg.g) pg.g = [];
+      if (xCfg !== false) {
+        const xAxis = { transform: `translate(0, ${ph})`, line: { x1: 0, y1: 0, x2: pw, y2: 0, stroke: '#333' },
+          g: { $each: xTicks, transform: ({d}) => `translate(${xScale(d)}, 0)`,
+            line: { x1: 0, y1: 0, x2: 0, y2: 5, stroke: '#333' },
+            text: { x: 0, y: 18, 'text-anchor': 'middle', 'font-size': 11, fill: '#666', $text: ({d}) => xFmt(d) }}};
+        if (xCfg.label) xAxis.text = { x: pw/2, y: 38, 'text-anchor': 'middle', 'font-size': 12, fill: '#333', $text: xCfg.label };
+        pg.g.push(xAxis);
+      }
+      if (yCfg !== false) {
+        const yAxis = { line: { x1: 0, y1: 0, x2: 0, y2: ph, stroke: '#333' },
+          g: { $each: yTicks, transform: ({d}) => `translate(0, ${yScale(d)})`,
+            line: { x1: -5, y1: 0, x2: 0, y2: 0, stroke: '#333' },
+            text: { x: -8, y: 4, 'text-anchor': 'end', 'font-size': 11, fill: '#666', $text: ({d}) => yFmt(d) }}};
+        if (yCfg.label) yAxis.text = { x: 0, y: 0, transform: `translate(-40, ${ph/2}) rotate(-90)`, 'text-anchor': 'middle', 'font-size': 12, fill: '#333', $text: yCfg.label };
+        pg.g.push(yAxis);
+      }
+
+      els.g = pg;
+      return svg({ width, height, style: 'font-family: system-ui, sans-serif;', ...els }, options);
+    }
+
+    // ============================================
+    // Examples
+    // ============================================
+    const examples = [
+      {
+        name: 'Bar Chart',
+        code: `const data = [
+  { label: 'Jan', value: 30 },
+  { label: 'Feb', value: 45 },
+  { label: 'Mar', value: 28 },
+  { label: 'Apr', value: 55 },
+  { label: 'May', value: 42 },
+];
+
+return svg({
+  width: 400,
+  height: 250,
+  style: 'font-family: system-ui; background: #f8f9fa;',
+
+  g: [
+    // Bars
+    {
+      transform: 'translate(50, 20)',
+      rect: {
+        $each: data,
+        x: ({ i }) => i * 65,
+        y: ({ d }) => 180 - d.value * 3,
+        width: 50,
+        height: ({ d }) => d.value * 3,
+        fill: 'steelblue',
+        rx: 4,
+      },
+    },
+    // X-axis labels
+    {
+      transform: 'translate(50, 220)',
+      text: {
+        $each: data,
+        x: ({ i }) => i * 65 + 25,
+        y: 0,
+        'text-anchor': 'middle',
+        'font-size': 12,
+        fill: '#666',
+        $text: ({ d }) => d.label,
+      },
+    },
+  ],
+});`
+      },
+      {
+        name: 'Fibonacci Spiral',
+        code: `const count = 200;
+const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+const points = Array.from({ length: count }, (_, i) => {
+  const angle = i * goldenAngle;
+  const radius = Math.sqrt(i) * 8;
+  return {
+    x: 200 + radius * Math.cos(angle),
+    y: 200 + radius * Math.sin(angle),
+    size: 2 + (i / count) * 4,
+    hue: (i / count) * 360,
+  };
+});
+
+return svg({
+  width: 400,
+  height: 400,
+  style: 'background: #1a1a2e;',
+
+  circle: {
+    $each: points,
+    cx: ({ d }) => d.x,
+    cy: ({ d }) => d.y,
+    r: ({ d }) => d.size,
+    fill: ({ d }) => \`hsl(\${d.hue}, 80%, 60%)\`,
+    opacity: ({ i }) => 0.5 + (i / count) * 0.5,
+  },
+});`
+      },
+      {
+        name: 'Layered Waves',
+        code: `const width = 500;
+const height = 200;
+const resolution = 80;
+
+const waves = [
+  { amplitude: 30, frequency: 2, color: '#ff6b6b' },
+  { amplitude: 25, frequency: 3, color: '#4ecdc4' },
+  { amplitude: 20, frequency: 4, color: '#45b7d1' },
+];
+
+function wavePath(wave, phase = 0) {
+  const points = [];
+  for (let i = 0; i <= resolution; i++) {
+    const x = (i / resolution) * width;
+    const y = height / 2 + wave.amplitude * Math.sin(
+      (i / resolution) * Math.PI * 2 * wave.frequency + phase
+    );
+    points.push(i === 0 ? \`M \${x} \${y}\` : \`L \${x} \${y}\`);
+  }
+  return points.join(' ');
+}
+
+return svg({
+  width,
+  height,
+  style: 'background: #0f0f23;',
+
+  path: {
+    $each: waves,
+    d: ({ d, i }) => wavePath(d, i * 0.5),
+    fill: 'none',
+    stroke: ({ d }) => d.color,
+    'stroke-width': 3,
+    'stroke-linecap': 'round',
+    opacity: 0.8,
+  },
+});`
+      },
+      {
+        name: 'Sunburst',
+        code: `const cx = 150, cy = 150;
+const rays = 24;
+const rings = 5;
+
+function arcPath(innerR, outerR, startAngle, endAngle) {
+  const x1 = cx + innerR * Math.cos(startAngle);
+  const y1 = cy + innerR * Math.sin(startAngle);
+  const x2 = cx + outerR * Math.cos(startAngle);
+  const y2 = cy + outerR * Math.sin(startAngle);
+  const x3 = cx + outerR * Math.cos(endAngle);
+  const y3 = cy + outerR * Math.sin(endAngle);
+  const x4 = cx + innerR * Math.cos(endAngle);
+  const y4 = cy + innerR * Math.sin(endAngle);
+  return \`M \${x1} \${y1} L \${x2} \${y2} A \${outerR} \${outerR} 0 0 1 \${x3} \${y3} L \${x4} \${y4} A \${innerR} \${innerR} 0 0 0 \${x1} \${y1} Z\`;
+}
+
+const segments = [];
+for (let ring = 0; ring < rings; ring++) {
+  for (let ray = 0; ray < rays; ray++) {
+    segments.push({
+      innerR: 15 + ring * 25,
+      outerR: 15 + (ring + 1) * 25 - 2,
+      startAngle: (ray / rays) * Math.PI * 2 + 0.02,
+      endAngle: ((ray + 1) / rays) * Math.PI * 2 - 0.02,
+      hue: (ray / rays) * 360,
+      lightness: 35 + (ring / rings) * 30,
+    });
+  }
+}
+
+return svg({
+  width: 300,
+  height: 300,
+  style: 'background: radial-gradient(circle, #1a1a3e, #0a0a1e);',
+
+  path: {
+    $each: segments,
+    d: ({ d }) => arcPath(d.innerR, d.outerR, d.startAngle, d.endAngle),
+    fill: ({ d }) => \`hsl(\${d.hue}, 75%, \${d.lightness}%)\`,
+    stroke: '#0a0a1e',
+    'stroke-width': 0.5,
+  },
+
+  circle: { cx, cy, r: 12, fill: '#fff', opacity: 0.9 },
+});`
+      },
+      {
+        name: 'Flow Field',
+        code: `const width = 400;
+const height = 300;
+const gridSize = 20;
+const lineLength = 12;
+
+function flowAngle(x, y) {
+  const scale = 0.025;
+  return Math.sin(x * scale) * Math.cos(y * scale * 0.5) * Math.PI +
+         Math.cos((x + y) * scale * 0.3) * Math.PI * 0.5;
+}
+
+const points = [];
+for (let y = gridSize; y < height - gridSize; y += gridSize) {
+  for (let x = gridSize; x < width - gridSize; x += gridSize) {
+    points.push({ x, y, angle: flowAngle(x, y) });
+  }
+}
+
+return svg({
+  width,
+  height,
+  style: 'background: #0d1117;',
+
+  line: {
+    $each: points,
+    x1: ({ d }) => d.x,
+    y1: ({ d }) => d.y,
+    x2: ({ d }) => d.x + Math.cos(d.angle) * lineLength,
+    y2: ({ d }) => d.y + Math.sin(d.angle) * lineLength,
+    stroke: ({ d }) => \`hsl(\${((d.angle + Math.PI) / (Math.PI * 2)) * 360}, 70%, 60%)\`,
+    'stroke-width': 2,
+    'stroke-linecap': 'round',
+  },
+
+  circle: {
+    $each: points,
+    cx: ({ d }) => d.x + Math.cos(d.angle) * lineLength,
+    cy: ({ d }) => d.y + Math.sin(d.angle) * lineLength,
+    r: 2,
+    fill: ({ d }) => \`hsl(\${((d.angle + Math.PI) / (Math.PI * 2)) * 360}, 70%, 70%)\`,
+  },
+});`
+      },
+      {
+        name: 'Heatmap Grid',
+        code: `const cols = 15, rows = 15, cellSize = 20;
+
+function noise(x, y) {
+  const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+function smoothNoise(x, y) {
+  const x0 = Math.floor(x), y0 = Math.floor(y);
+  const fx = x - x0, fy = y - y0;
+  const n00 = noise(x0, y0), n10 = noise(x0 + 1, y0);
+  const n01 = noise(x0, y0 + 1), n11 = noise(x0 + 1, y0 + 1);
+  return (n00 * (1-fx) + n10 * fx) * (1-fy) + (n01 * (1-fx) + n11 * fx) * fy;
+}
+
+const cells = [];
+for (let row = 0; row < rows; row++) {
+  for (let col = 0; col < cols; col++) {
+    cells.push({ row, col, value: smoothNoise(col * 0.3, row * 0.3) });
+  }
+}
+
+return svg({
+  width: cols * cellSize + 20,
+  height: rows * cellSize + 20,
+  style: 'background: #1a1a2e;',
+
+  g: {
+    transform: 'translate(10, 10)',
+    rect: {
+      $each: cells,
+      x: ({ d }) => d.col * cellSize,
+      y: ({ d }) => d.row * cellSize,
+      width: cellSize - 1,
+      height: cellSize - 1,
+      fill: ({ d }) => \`hsl(\${(1 - d.value) * 240}, 80%, 50%)\`,
+      rx: 2,
+    },
+  },
+});`
+      },
+      {
+        name: 'Nested Grid (Parent Context)',
+        code: `// Demonstrates nested $each with parent context
+const grid = [
+  [1, 2, 3, 4],
+  [5, 6, 7, 8],
+  [9, 10, 11, 12],
+];
+
+return svg({
+  width: 220,
+  height: 180,
+  style: 'background: #1a1a2e;',
+
+  g: {
+    $each: grid,
+    transform: ({ i }) => \`translate(10, \${i * 55 + 10})\`,
+
+    rect: {
+      $each: ({ d }) => d, // inner array
+      x: ({ i }) => i * 55,
+      width: 50,
+      height: 50,
+      fill: ({ d, parent }) => \`hsl(\${d * 25 + parent.i * 30}, 70%, 50%)\`,
+      rx: 6,
+    },
+
+    text: {
+      $each: ({ d }) => d,
+      x: ({ i }) => i * 55 + 25,
+      y: 30,
+      'text-anchor': 'middle',
+      fill: '#fff',
+      'font-size': 14,
+      'font-family': 'system-ui',
+      $text: ({ d }) => d,
+    },
+  },
+});`
+      },
+      {
+        name: 'Scatter Plot',
+        code: `const points = [
+  { x: 20, y: 80, size: 8, category: 'A' },
+  { x: 50, y: 45, size: 12, category: 'B' },
+  { x: 80, y: 60, size: 6, category: 'A' },
+  { x: 120, y: 30, size: 15, category: 'C' },
+  { x: 150, y: 70, size: 10, category: 'B' },
+  { x: 180, y: 25, size: 8, category: 'A' },
+  { x: 220, y: 55, size: 14, category: 'C' },
+  { x: 260, y: 40, size: 9, category: 'B' },
+];
+
+const colors = { A: '#ff6b6b', B: '#4ecdc4', C: '#ffe66d' };
+
+return svg({
+  width: 320,
+  height: 150,
+  style: 'background: #16213e; font-family: system-ui;',
+
+  // Grid lines
+  line: {
+    $each: [25, 50, 75],
+    x1: 20,
+    y1: ({ d }) => d + 20,
+    x2: 300,
+    y2: ({ d }) => d + 20,
+    stroke: '#ffffff20',
+    'stroke-dasharray': '4,4',
+  },
+
+  // Points
+  circle: {
+    $each: points,
+    cx: ({ d }) => d.x + 20,
+    cy: ({ d }) => 120 - d.y,
+    r: ({ d }) => d.size,
+    fill: ({ d }) => colors[d.category],
+    opacity: 0.8,
+  },
+
+  // Legend
+  g: {
+    transform: 'translate(240, 10)',
+    rect: {
+      $each: Object.entries(colors),
+      x: 0,
+      y: ({ i }) => i * 18,
+      width: 12,
+      height: 12,
+      fill: ({ d }) => d[1],
+      rx: 2,
+    },
+    text: {
+      $each: Object.entries(colors),
+      x: 18,
+      y: ({ i }) => i * 18 + 10,
+      fill: '#fff',
+      'font-size': 11,
+      $text: ({ d }) => d[0],
+    },
+  },
+});`
+      },
+      {
+        name: 'Composition with $raw',
+        code: `// Create reusable icon components
+const starIcon = svg({
+  width: 20, height: 20, viewBox: '0 0 20 20',
+  polygon: {
+    points: '10,2 12,7 18,8 14,12 15,18 10,15 5,18 6,12 2,8 8,7',
+    fill: 'gold', stroke: 'orange', 'stroke-width': 1
+  }
+});
+
+const heartIcon = svg({
+  width: 20, height: 20, viewBox: '0 0 20 20',
+  path: {
+    d: 'M10 18 C5 13 2 10 2 6 C2 3 4 1 7 1 C8.5 1 10 2.5 10 4 C10 2.5 11.5 1 13 1 C16 1 18 3 18 6 C18 10 15 13 10 18Z',
+    fill: '#ff6b6b'
+  }
+});
+
+const data = [
+  { type: 'star', count: 4 },
+  { type: 'heart', count: 3 },
+  { type: 'star', count: 5 },
+];
+
+const icons = { star: starIcon, heart: heartIcon };
+
+return svg({
+  width: 350, height: 100,
+  style: 'background: #1a1a2e;',
+
+  g: {
+    $each: data,
+    transform: ({ i }) => \`translate(10, \${i * 30 + 10})\`,
+
+    // Render multiple icons using nested $each and $raw
+    g: {
+      $each: ({ d }) => Array(d.count).fill(d.type),
+      transform: ({ i }) => \`translate(\${i * 25}, 0)\`,
+      $raw: ({ d }) => icons[d]
+    }
+  }
+});`
+      },
+      {
+        name: 'plot() - Scatter',
+        code: `// plot() auto-scales axes from data
+const data = [
+  { x: 10, y: 25 },
+  { x: 25, y: 45 },
+  { x: 40, y: 35 },
+  { x: 55, y: 70 },
+  { x: 70, y: 55 },
+  { x: 85, y: 90 },
+];
+
+return plot({
+  width: 380,
+  height: 280,
+  data,
+  x: d => d.x,
+  y: d => d.y,
+  type: 'scatter',
+  color: (d, i) => \`hsl(\${i * 50}, 70%, 50%)\`,
+  radius: 6,
+  title: 'Scatter Plot',
+  xAxis: { label: 'X Axis', grid: true },
+  yAxis: { label: 'Y Axis' },
+  background: '#fafafa',
+});`
+      },
+      {
+        name: 'plot() - Line Chart',
+        code: `const data = [
+  { month: 1, sales: 120 },
+  { month: 2, sales: 180 },
+  { month: 3, sales: 150 },
+  { month: 4, sales: 220 },
+  { month: 5, sales: 190 },
+  { month: 6, sales: 280 },
+];
+
+return plot({
+  width: 400,
+  height: 250,
+  data,
+  x: d => d.month,
+  y: d => d.sales,
+  type: 'line',
+  color: '#e74c3c',
+  title: 'Monthly Sales',
+  xAxis: { label: 'Month' },
+  yAxis: { label: 'Sales ($)' },
+  background: '#fff',
+});`
+      },
+      {
+        name: 'plot() - Bar Chart',
+        code: `const data = [
+  { q: 1, revenue: 30 },
+  { q: 2, revenue: 45 },
+  { q: 3, revenue: 28 },
+  { q: 4, revenue: 55 },
+  { q: 5, revenue: 42 },
+];
+
+const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'];
+
+return plot({
+  width: 350,
+  height: 250,
+  data,
+  x: d => d.q,
+  y: d => d.revenue,
+  type: 'bar',
+  color: (d, i) => colors[i],
+  title: 'Quarterly Revenue',
+  xAxis: { label: 'Quarter' },
+  yAxis: { label: 'Revenue (M)' },
+  background: '#fafafa',
+});`
+      },
+      {
+        name: 'plot() - Area Chart',
+        code: `// Generate some wave-like data
+const data = Array.from({ length: 25 }, (_, i) => ({
+  x: i,
+  y: Math.sin(i * 0.4) * 30 + 50 + Math.random() * 10,
+}));
+
+return plot({
+  width: 450,
+  height: 250,
+  data,
+  x: d => d.x,
+  y: d => d.y,
+  type: 'area',
+  color: '#3498db',
+  title: 'Trend Over Time',
+  xAxis: { label: 'Time', ticks: 6, grid: true },
+  yAxis: { label: 'Value', ticks: 5 },
+  background: '#fff',
+});`
+      },
+    ];
+
+    // ============================================
+    // Render UI
+    // ============================================
+    const container = document.getElementById('examples');
+
+    examples.forEach((example, idx) => {
+      const div = document.createElement('div');
+      div.className = 'example';
+      div.innerHTML = `
+        <div class="example-header">
+          <h2>${example.name}</h2>
+          <button onclick="runExample(${idx})">Run (Ctrl+Enter)</button>
+        </div>
+        <div class="example-content">
+          <div class="code-panel">
+            <textarea id="code-${idx}" spellcheck="false">${example.code}</textarea>
+          </div>
+          <div class="preview-panel" id="preview-${idx}"></div>
+        </div>
+      `;
+      container.appendChild(div);
+
+      // Run initially
+      setTimeout(() => runExample(idx), 0);
+
+      // Add keyboard shortcut
+      const textarea = document.getElementById(`code-${idx}`);
+      textarea.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'Enter') {
+          e.preventDefault();
+          runExample(idx);
+        }
+        // Handle tab key
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + 2;
+        }
+      });
+    });
+
+    function runExample(idx) {
+      const code = document.getElementById(`code-${idx}`).value;
+      const preview = document.getElementById(`preview-${idx}`);
+
+      try {
+        // Create a function that returns the SVG
+        const fn = new Function('svg', code);
+        const result = fn(svg);
+        preview.innerHTML = result;
+      } catch (err) {
+        preview.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
