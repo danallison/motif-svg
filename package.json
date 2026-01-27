@@ -30,6 +30,14 @@
     "graphics",
     "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danallison/motif-svg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danallison/motif-svg/issues"
+  },
+  "homepage": "https://github.com/danallison/motif-svg#readme",
   "author": "Dan Allison",
   "license": "MIT",
   "devDependencies": {
