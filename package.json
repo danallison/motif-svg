@@ -1,5 +1,5 @@
 {
-  "name": "motif",
+  "name": "motif-svg",
   "version": "0.1.0",
   "description": "A tiny library for creating data-driven SVGs with a declarative API",
   "type": "module",

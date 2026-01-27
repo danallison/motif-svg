@@ -15,13 +15,13 @@ A tiny library for creating data-driven SVGs with a clean, declarative API.
 ## Installation
 
 ```bash
-npm install motif
+npm install motif-svg
 ```
 
 ## Quick Start
 
 ```typescript
-import { svg } from 'motif';
+import { svg } from 'motif-svg';
 
 const chart = svg({
   width: 200,
@@ -305,7 +305,7 @@ svg(definition, {
 The `plot()` function provides automatic axis scaling, tick generation, and common chart types.
 
 ```typescript
-import { plot } from 'motif';
+import { plot } from 'motif-svg';
 
 const chart = plot({
   width: 400,
@@ -424,7 +424,7 @@ import type {
   PlotConfig,
   AxisConfig,
   Margin,
-} from 'motif';
+} from 'motif-svg';
 ```
 
 ### Context<T>
